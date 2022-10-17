@@ -1,0 +1,6 @@
+# ignore pkl and pth in split folder
+*.pkl
+*.pth
+
+# ignore pycache
+*.pyc

@@ -79,7 +79,8 @@ class Minesweeper():
         return self.mask
 
     def action(self, num):
-        # 지뢰 찾기에서 가능한 action
+        # All possible action
+
         # 1) OPEN: Open 'unknown' or 'pointed'. Can't open 'opened'
         # 2) POINT: Point 'unknown' as mine. 'Unknown' becomes 'pointed'
         #
@@ -92,7 +93,13 @@ class Minesweeper():
         if num > self.num_cell - 1: # POINT aciton
             num_sub = num - self.num_cell
             posX, posY = self.num2pos(num_sub)
-            self.status[posY][posX] = -1
+            if self.status[posY][posX] == 0: # allow only point 'unknown'
+                self.status[posY][posX] = -1
+            elif self.status[posY][posX] == 1:
+                print('invalid action | point "opened" cell')
+            else:
+                print('invalid action | point "pointed" cell')
+
         else: # OPEN action
             posX, posY = self.num2pos(num)
             if (self.status[posY][posX] == 0) or (self.status[posY][posX] == -1):
@@ -102,12 +109,31 @@ class Minesweeper():
 
         self.win_or_dead_or_alive()
         
-        if self.win == 1:
-            print('win')
         if self.dead == 1:
-            print('dead')
+            #print('dead')
+            done = 1
+            reward = -1
+        elif self.win == 1:
+            #print('win')
+            reward = 100 # big reward
+            done = 1
+        else: # alive, continue
+            # point도 reward가 들어가다보니 point만 다 하고 시작하는 문제가 생겨서
+            # point는 reward 없도록 함
+            if num > self.num_cell - 1:
+                reward = 0
+                done = 0
+            else:
+                reward = 1
+                done = 0
+            # 다만 단순히 오래하는게 좋다 생각할 수 있음
+            # 예를 들어, open하는걸 괜히 point하고 open하는 식으로 늘린다던가
+            # 그래서 나중에 win 시 reward를 (big reward)가 아니라 (big reward - alpha * turn) 이런 느낌으로 줘도 좋을 듯
+
+        return reward, done
 
     def open(self, num):
+        # "0 연쇄 열림"
         # 발동 조건: open한 cell이 mine이 아니고, num_mine_around가 0일 경우
         # 내용: 주변 8 cell을 모두 열어준다. num_mine_around가 0이었기 때문에 모두 지뢰가 아닌 것은 분명함.
         # 죽음의 메아리: 8 cell 중 자기와 같은 처지있는 거에 대해 다시 내용을 반복
